@@ -1,8 +1,10 @@
 package org.springboot.jwt.controller;
 
 import org.springboot.jwt.domain.ApplicationUser;
-import org.springboot.jwt.service.UserDetailsServiceImpl;
+import org.springboot.jwt.dto.ApplicationUserDto;
+import org.springboot.jwt.service.ApplicationUserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -11,21 +13,22 @@ import java.util.List;
 @RequestMapping("/users")
 public class UserController {
 
-    private UserDetailsServiceImpl userDetailsService;
+    private ApplicationUserService applicationUserService;
 
 
     @Autowired
-    public UserController(final UserDetailsServiceImpl userDetailsService) {
-        this.userDetailsService = userDetailsService;
+    public UserController(final ApplicationUserService applicationUserService) {
+        this.applicationUserService = applicationUserService;
     }
 
     @PostMapping("/sign-up")
     public void signUp(@RequestBody ApplicationUser applicationUser) {
-        userDetailsService.save(applicationUser);
+        applicationUserService.save(applicationUser);
     }
 
-    @GetMapping
-    public List<ApplicationUser> getAllUsers() {
-        return userDetailsService.getAllUsers();
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    @GetMapping("/all")
+    public List<ApplicationUserDto> getAllUsers() {
+        return applicationUserService.getAllUsers();
     }
 }

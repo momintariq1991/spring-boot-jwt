@@ -1,10 +1,11 @@
 package org.springboot.jwt.security;
 
-import org.springboot.jwt.service.UserDetailsServiceImpl;
+import org.springboot.jwt.service.ApplicationUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
-import org.springframework.http.HttpMethod;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
@@ -16,22 +17,26 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import static org.springboot.jwt.security.Constants.SIGN_UP_URL;
 
+@EnableGlobalMethodSecurity(prePostEnabled = true)
+@Configuration
 @EnableWebSecurity
 public class WebSecurity extends WebSecurityConfigurerAdapter {
 
-    private UserDetailsServiceImpl userDetailsService;
+    private ApplicationUserService applicationUserService;
     private BCryptPasswordEncoder bCryptPasswordEncoder;
 
     @Autowired
-    public WebSecurity(UserDetailsServiceImpl userDetailsService, BCryptPasswordEncoder bCryptPasswordEncoder) {
-        this.userDetailsService = userDetailsService;
+    public WebSecurity(ApplicationUserService applicationUserService, BCryptPasswordEncoder bCryptPasswordEncoder) {
+        this.applicationUserService = applicationUserService;
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
     }
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        http.cors().and().csrf().disable().authorizeRequests()
-                .antMatchers(HttpMethod.POST, SIGN_UP_URL).permitAll()
+        http.csrf().disable();
+        http.headers().frameOptions().disable();
+                http.authorizeRequests()
+                .antMatchers("/h2-console/**", SIGN_UP_URL).permitAll()
                 .anyRequest().authenticated()
                 .and()
                 .addFilter(new JwtAuthenticationFilter(authenticationManager()))
@@ -42,7 +47,7 @@ public class WebSecurity extends WebSecurityConfigurerAdapter {
 
     @Override
     public void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth.userDetailsService(userDetailsService).passwordEncoder(bCryptPasswordEncoder);
+        auth.userDetailsService(applicationUserService).passwordEncoder(bCryptPasswordEncoder);
     }
 
     @Bean
